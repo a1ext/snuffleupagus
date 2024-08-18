@@ -37,13 +37,19 @@ static inline sp_regexp* sp_regexp_compile(zend_string *zstr) {
   if (!re) { return NULL; }
   sp_regexp *ret = pecalloc(1, sizeof(sp_regexp), 1);
   ret->re = re;
-  ret->pattern = zstr;
+  ret->pattern = zend_string_copy(zstr);
   return ret;
 }
 static inline void sp_regexp_free(sp_regexp *regexp) {
   if (regexp) {
-    if (regexp->re) { sp_pcre_free(regexp->re); }
-    if (regexp->pattern) { zend_string_release(regexp->pattern); }
+    if (regexp->re) {
+      sp_pcre_free(regexp->re);
+      regexp->re = NULL;
+    }
+    if (regexp->pattern) {
+      zend_string_release(regexp->pattern);
+      regexp->pattern = NULL;
+    }
     pefree(regexp, 1);
   }
 }

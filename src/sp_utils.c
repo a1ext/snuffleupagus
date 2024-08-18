@@ -235,21 +235,21 @@ static char* zend_string_to_char(const zend_string* zs) {
 const zend_string* sp_zval_to_zend_string(const zval* zv) {
   switch (Z_TYPE_P(zv)) {
     case IS_LONG: {
-      char* msg;
+      char* msg = NULL;
       spprintf(&msg, 0, ZEND_LONG_FMT, Z_LVAL_P(zv));
       zend_string* zs = zend_string_init(msg, strlen(msg), 0);
       efree(msg);
       return zs;
     }
     case IS_DOUBLE: {
-      char* msg;
+      char* msg = NULL;
       spprintf(&msg, 0, "%f", Z_DVAL_P(zv));
       zend_string* zs = zend_string_init(msg, strlen(msg), 0);
       efree(msg);
       return zs;
     }
     case IS_STRING: {
-      return Z_STR_P(zv);
+      return zend_string_copy(Z_STR_P(zv));
     }
     case IS_FALSE:
       return zend_string_init(ZEND_STRL("FALSE"), 0);
@@ -334,11 +334,11 @@ void sp_log_disable_ret(const char* restrict path,
     sp_log_request(dump, config_node->textual_representation);
   }
   if (ret_value) {
-    zend_string *ret_value_dup = zend_string_init(ZSTR_VAL(ret_value), ZSTR_LEN(ret_value), 0);
-    ret_value_dup = php_raw_url_encode(ZSTR_VAL(ret_value_dup), ZSTR_LEN(ret_value_dup));
+    zend_string *ret_value_dup = php_raw_url_encode(ZSTR_VAL(ret_value), ZSTR_LEN(ret_value));
     char_repr = zend_string_to_char(ret_value_dup);
     size_t max_len = MIN(ZSTR_LEN(ret_value_dup), (size_t)SPCFG(log_max_len));
     char_repr[max_len] = '\0';
+    zend_string_release(ret_value_dup);
   }
   if (alias) {
     sp_log_auto(
@@ -368,11 +368,14 @@ bool sp_match_array_key(const zval* zv, const zend_string* to_match, const sp_re
       char* idx_str = NULL;
       spprintf(&idx_str, 0, ZEND_ULONG_FMT, idx);
       zend_string* tmp = zend_string_init(idx_str, strlen(idx_str), 0);
-      if (sp_match_value(tmp, to_match, rx)) {
-        efree(idx_str);
+      bool matched = sp_match_value(tmp, to_match, rx);
+
+      zend_string_reelase(tmp);
+      efree(idx_str);
+
+      if (matched) {
         return true;
       }
-      efree(idx_str);
     }
   }
   ZEND_HASH_FOREACH_END();
