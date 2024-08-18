@@ -99,6 +99,7 @@ PHP_FUNCTION(sp_setcookie) {
   zend_bool secure = 0, httponly = 0;
   const sp_cookie *cookie_node = NULL;
   const char *cookie_samesite;
+  zend_bool should_free = 0;
 
   // LCOV_EXCL_BR_START
   ZEND_PARSE_PARAMETERS_START(1, 7)
@@ -122,10 +123,12 @@ PHP_FUNCTION(sp_setcookie) {
         php_error_docref(NULL, E_WARNING,
                          "Cannot pass arguments after the options array");
         RETURN_FALSE;
+      } else {
+        php_head_parse_cookie_options_array(expires_or_options, &expires, &path,
+                                            &domain, &secure, &httponly,
+                                            &samesite);
+        should_free = 1;
       }
-      php_head_parse_cookie_options_array(expires_or_options, &expires, &path,
-                                          &domain, &secure, &httponly,
-                                          &samesite);
     } else {
       expires = zval_get_long(expires_or_options);
     }
@@ -203,6 +206,18 @@ PHP_FUNCTION(sp_setcookie) {
     zend_string_release(path_samesite);
   }
 #endif
+  if (samesite) {
+    zend_string_release(samesite);
+  }
+
+  if (should_free) {
+    if (path) {
+        zend_string_release(path);
+    }
+    if (domain) {
+      zend_string_release(domain);
+    }
+  }
 }
 
 int hook_cookies() {

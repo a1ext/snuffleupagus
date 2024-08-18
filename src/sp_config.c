@@ -225,6 +225,8 @@ SP_PARSEKW_FN(parse_cidr) {
   }
 
   *(sp_cidr **)retval = cidr;
+  zend_string_release(value);
+
   return cidr ? SP_PARSER_SUCCESS : SP_PARSER_ERROR;
 }
 
@@ -240,6 +242,7 @@ SP_PARSEKW_FN(parse_regexp) {
   }
 
   *(sp_regexp **)retval = compiled_re;
+  zend_string_release(value);
 
   return SP_PARSER_SUCCESS;
 }

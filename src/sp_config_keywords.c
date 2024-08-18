@@ -69,6 +69,7 @@ SP_PARSEKW_FN(parse_log_media) {
     return SP_PARSER_SUCCESS;
   }
 
+  zend_string_release_ex(value, 1);
   sp_log_err("config", "." SP_TOKEN_LOG_MEDIA "() only supports 'syslog' or 'php' on line %zu", kw->lineno);
 
   return SP_PARSER_ERROR;
@@ -434,6 +435,9 @@ SP_PARSE_FN(parse_disabled_functions) {
       SPCFG(disabled_functions_reg).disabled_functions = sp_list_insert(SPCFG(disabled_functions_reg).disabled_functions, df);
     }
   }
+  if (param) { zend_string_release(param); }
+  if (var) { zend_string_release(var); }
+
   return SP_PARSER_STOP;
 
 out:
