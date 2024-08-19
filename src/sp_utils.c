@@ -370,7 +370,7 @@ bool sp_match_array_key(const zval* zv, const zend_string* to_match, const sp_re
       zend_string* tmp = zend_string_init(idx_str, strlen(idx_str), 0);
       bool matched = sp_match_value(tmp, to_match, rx);
 
-      zend_string_reelase(tmp);
+      zend_string_release(tmp);
       efree(idx_str);
 
       if (matched) {
